@@ -17,7 +17,7 @@ async function sendOTP(email, otp) {
         service: 'gmail',
         auth: {
             user: 'mohitsinghx4@gmail.com', // Replace with your email
-            pass: process.env.PASS, // Replace with your email password
+            pass: process.env.PASS,         // Replace with your email password from .env
         },
     });
 
@@ -30,9 +30,10 @@ async function sendOTP(email, otp) {
 
     try {
         await transporter.sendMail(mailOptions);
-        console.log('OTP sent to email:', email);
+        console.log(`OTP sent to email: ${email}`);
     } catch (error) {
         console.error('Error sending OTP:', error);
+        throw new Error('Failed to send OTP');
     }
 }
 
@@ -41,62 +42,80 @@ async function signup(req, res) {
     const { name, email, password } = req.body;
 
     if (!name || !email || !password) {
-        return res.send('All fields are required!');
+        return res.status(400).json({ message: 'All fields are required!' });
     }
 
-    // Check if user already exists
-    const userExists = await User.findOne({ email });
-    if (userExists) {
-        return res.send('User already exists!');
+    try {
+        // Check if user already exists
+        const userExists = await User.findOne({ email });
+        if (userExists) {
+            return res.status(400).json({ message: 'User already exists!' });
+        }
+
+        // Verify email (check for valid email format and existence)
+        const emailIsValid = await verifyEmail(email);
+        if (!emailIsValid) {
+            return res.status(400).json({ message: 'Invalid email or email does not exist!' });
+        }
+
+        // Generate OTP and encrypt password
+        const otp = generateOTP();
+        const otpExpiry = Date.now() + 70000; // 60 seconds + 10 seconds grace period
+        const encryptedPassword = await bcrypt.hash(password, 10);
+
+        // Store OTP, encrypted password, and expiration time
+        otps[email] = { otp, otpExpiry, encryptedPassword };
+
+        // Send OTP to user's email
+        await sendOTP(email, otp);
+
+        return res.status(200).json({ message: 'OTP has been sent to your email. Please verify to complete registration.' });
+    } catch (error) {
+        console.error('Signup error:', error);
+        return res.status(500).json({ message: 'An error occurred during signup. Please try again later.' });
     }
-
-    // Verify email
-    const emailIsValid = await verifyEmail(email);
-    if (!emailIsValid) {
-        return res.send('Invalid email or email does not exist!');
-    }
-
-    // Generate and send OTP
-    const otp = generateOTP();
-    const otpExpiry = Date.now() + 70000; // 60 seconds + 10 seconds grace period
-
-    // Encrypt the password before storing it
-    const encryptedPassword = await bcrypt.hash(password, 10);
-
-    // Store OTP, encrypted password, and expiration time
-    otps[email] = { otp, otpExpiry, encryptedPassword };
-
-    await sendOTP(email, otp);
-
-    res.send('OTP has been sent to your email. Please verify to complete registration.');
 }
-
 
 // OTP Verification Controller
 async function verifyOtp(req, res) {
-    const { email, otp } = req.body;
+    const { email, otp, name } = req.body;
+
+    if (!email || !otp) {
+        return res.status(400).json({ message: 'Email and OTP are required!' });
+    }
 
     if (otps[email]) {
         const currentTime = Date.now();
-        if (otps[email].otp === otp && currentTime <= otps[email].otpExpiry) {
-            // Retrieve the encrypted password from the `otps` object
-            const encryptedPassword = otps[email].encryptedPassword;
+        const storedOtpData = otps[email];
 
-            // Create a new user with the encrypted password
-            const newUser = new User({ email, name: req.body.name, password: encryptedPassword });
-            await newUser.save();
-            delete otps[email]; // OTP verified, remove it
-            res.send('OTP verified, signup successful!');
-        } else if (currentTime > otps[email].otpExpiry) {
-            delete otps[email]; // OTP expired, remove it
-            res.send('OTP has expired. Please request a new one.');
+        if (storedOtpData.otp === otp && currentTime <= storedOtpData.otpExpiry) {
+            try {
+                // OTP is valid, create user with encrypted password
+                const newUser = new User({
+                    email,
+                    name,
+                    password: storedOtpData.encryptedPassword,
+                });
+                await newUser.save();
+                
+                // OTP verified, remove it from store
+                delete otps[email];
+
+                return res.status(200).json({ message: 'OTP verified, signup successful!' });
+            } catch (error) {
+                console.error('Error saving user:', error);
+                return res.status(500).json({ message: 'Error creating user. Please try again later.' });
+            }
+        } else if (currentTime > storedOtpData.otpExpiry) {
+            // OTP has expired, remove it
+            delete otps[email];
+            return res.status(400).json({ message: 'OTP has expired. Please request a new one.' });
         } else {
-            res.send('Invalid OTP.');
+            return res.status(400).json({ message: 'Invalid OTP.' });
         }
     } else {
-        res.send('Invalid OTP or OTP has expired.');
+        return res.status(400).json({ message: 'Invalid OTP or OTP has expired.' });
     }
 }
-
 
 module.exports = { signup, verifyOtp };
