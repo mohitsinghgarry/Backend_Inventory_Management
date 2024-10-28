@@ -66,9 +66,9 @@ async function sendPasswordResetLink(email, token) {
 
 // Signup Controller with encrypted password storage
 async function signup(req, res) {
-    const { name, email, password } = req.body;
-
-    if (!name || !email || !password) {
+    const { name, email, password, userType } = req.body;
+    console.log(req.body);
+    if (!name || !email || !password || !userType) { // Check for userType
         return res.status(400).json({ success: false, message: 'All fields are required!' });
     }
 
@@ -91,7 +91,7 @@ async function signup(req, res) {
         const encryptedPassword = await bcrypt.hash(password, 10);
 
         // Store OTP, encrypted password, and expiration time
-        otps[email] = { otp, otpExpiry, encryptedPassword };
+        otps[email] = { otp, otpExpiry, encryptedPassword, name, userType }; // Correctly storing userType
 
         // Send OTP to user's email
         await sendOTP(email, otp);
@@ -103,10 +103,11 @@ async function signup(req, res) {
     }
 }
 
+
 // OTP Verification Controller
 async function verifyOtp(req, res) {
-    const { email, otp, name } = req.body;
-
+    const { email, otp } = req.body;
+    console.log(req.body);
     if (!email || !otp) {
         return res.status(400).json({ success: false, message: 'Email and OTP are required!' });
     }
@@ -117,14 +118,15 @@ async function verifyOtp(req, res) {
 
         if (storedOtpData.otp === otp && currentTime <= storedOtpData.otpExpiry) {
             try {
-                // OTP is valid, create user with encrypted password
+                // OTP is valid, create user with encrypted password, name, and userType
                 const newUser = new User({
                     email,
-                    name,
+                    name: storedOtpData.name, // Store name in the database
+                    userType: storedOtpData.userType, // Store userType in the database
                     password: storedOtpData.encryptedPassword,
                 });
                 await newUser.save();
-                
+
                 // OTP verified, remove it from store
                 delete otps[email];
 
@@ -144,6 +146,7 @@ async function verifyOtp(req, res) {
         return res.status(400).json({ success: false, message: 'Invalid OTP or OTP has expired.' });
     }
 }
+
 
 // Login Controller
 async function login(req, res) {
@@ -174,7 +177,8 @@ async function login(req, res) {
             user: {
                 id: user._id,
                 name: user.name, // Ensure this is included
-                email: user.email
+                email: user.email,
+                userType:user.userType
             }
         });
     } catch (error) {
