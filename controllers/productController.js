@@ -38,3 +38,53 @@ exports.getProducts = async (req, res) => {
         res.status(500).json({ message: 'Error fetching products', error: error.message });
     }
 };
+//controller for finding singleProduct
+exports.singleProduct = async (req, res) => {
+    const { id } = req.params; // Extract product ID from URL params
+    console.log(id);
+    try {
+        const product = await Product.findById(id); // Find the product by ID
+        if (!product) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+        res.status(200).json(product); // Send the product data as JSON
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching product', error: error.message });
+    }
+};
+
+// Controller function to remove a product
+exports.removeProduct = async (req, res) => {
+    const { id } = req.body; // Extract product ID from the request body
+    try {
+        const deletedProduct = await Product.findByIdAndDelete(id); // Delete the product from the database
+        if (!deletedProduct) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+        res.status(200).json({ message: 'Product deleted successfully', product: deletedProduct });
+    } catch (error) {
+        res.status(500).json({ message: 'Error deleting product', error: error.message });
+    }
+};
+
+// Controller function to update a product
+exports.updateProduct = async (req, res) => {
+    const { name, productId, price, category, quantity } = req.body;
+    const imageUrl = req.file ? `http://localhost:3000/uploads/${req.file.filename}` : '';
+
+    try {
+        const updatedProduct = await Product.findByIdAndUpdate(
+            req.params.id, // Use the ID from the URL
+            { name, productId, price, category, quantity, imageUrl },
+            { new: true } // Return the updated document
+        );
+
+        if (!updatedProduct) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+
+        res.status(200).json({ message: 'Product updated successfully', product: updatedProduct });
+    } catch (error) {
+        res.status(500).json({ message: 'Error updating product', error: error.message });
+    }
+};
