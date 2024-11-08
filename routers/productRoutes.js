@@ -1,7 +1,6 @@
-// routers/productRoutes.js
 const express = require('express');
 const multer = require('multer');
-const { addProduct,getProducts,removeProduct,updateProduct,singleProduct } = require('../controllers/productController'); // Import the controller function
+const { addProduct, getProducts, removeProduct, updateProduct, singleProduct } = require('../controllers/productController');
 
 const router = express.Router();
 
@@ -12,13 +11,19 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// POST route to add a product
-router.post('/add-product', upload.single('image'), addProduct);
-router.get('/products', getProducts);
-router.post('/remove',removeProduct);
+// POST route to add a product with multiple images
+router.post('/add-product', upload.array('images', 4), addProduct); // Allow up to 4 images
 
-router.get('/product/:id' , singleProduct);
-// PUT route to update a product
-router.put('/products/:id', upload.single('image'), updateProduct); // Use PUT method for updates
+// GET route to retrieve products
+router.get('/products', getProducts);
+
+// POST route to remove a product
+router.post('/remove', removeProduct);
+
+// GET route to retrieve a single product by ID
+router.get('/product/:id', singleProduct);
+
+// PUT route to update a product with multiple images
+router.put('/products/:id', upload.array('images', 4), updateProduct); // Allow up to 4 images for updates
 
 module.exports = router;

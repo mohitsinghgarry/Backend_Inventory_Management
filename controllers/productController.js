@@ -4,27 +4,26 @@ const Product = require('../models/ProductSchema'); // Import the Product model
 // Controller function to add a new product
 exports.addProduct = async (req, res) => {
     try {
-        // Extract product details from the request body
-        const { name, productId, price, category, quantity } = req.body;
+        const { name, productId, price, category, quantity, description } = req.body;
 
-        // Check if an image file was uploaded and set its path
-        const imageUrl = req.file ? `http://localhost:3000/uploads/${req.file.filename}` : '';
+        // Create an array of image URLs from the uploaded files
+        const imageUrls = req.files.map(file => `http://localhost:3000/uploads/${file.filename}`);
 
-        // Create a new product document
+        // Create a new product document with multiple images
         const newProduct = new Product({
             name,
             productId,
             price,
             category,
             quantity,
-            imageUrl,
+            description,
+            imageUrls, // Store the array of image URLs
         });
 
         // Save the new product to the database
         await newProduct.save();
         res.status(201).json({ message: 'Product added successfully', product: newProduct });
     } catch (error) {
-        // Handle errors, if any
         res.status(500).json({ message: 'Error adding product', error: error.message });
     }
 };
@@ -69,13 +68,13 @@ exports.removeProduct = async (req, res) => {
 
 // Controller function to update a product
 exports.updateProduct = async (req, res) => {
-    const { name, productId, price, category, quantity } = req.body;
-    const imageUrl = req.file ? `http://localhost:3000/uploads/${req.file.filename}` : '';
+    const { name, productId, price, category, quantity, description} = req.body;
+    const imageUrls = req.files.map(file => `http://localhost:3000/uploads/${file.filename}`);
 
     try {
         const updatedProduct = await Product.findByIdAndUpdate(
             req.params.id, // Use the ID from the URL
-            { name, productId, price, category, quantity, imageUrl },
+            { name, productId, price, category, quantity,description ,imageUrls },
             { new: true } // Return the updated document
         );
 
