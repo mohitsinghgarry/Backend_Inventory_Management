@@ -17,13 +17,13 @@ async function sendOTP(email, otp) {
     let transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
-            user: 'mohitsinghx4@gmail.com', // Replace with your email
+            user: process.env.EMAIL, // Replace with your email
             pass: process.env.PASS,         // Use password from .env
         },
     });
 
     let mailOptions = {
-        from: 'mohitsinghx4@gmail.com',
+        from: process.env.EMAIL,
         to: email,
         subject: 'Your OTP for verification',
         text: `Your OTP for email verification is ${otp}`,
@@ -43,13 +43,13 @@ async function sendPasswordResetLink(email, token) {
     let transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
-            user: 'mohitsinghx4@gmail.com', // Replace with your email
+            user: process.env.EMAIL, // Replace with your email
             pass: process.env.PASS,         // Use password from .env
         },
     });
 
     let mailOptions = {
-        from: 'mohitsinghx4@gmail.com',
+        from: process.env.EMAIL,
         to: email,
         subject: 'Password Reset Request',
         text: `To reset your password, click the link: http://localhost:3001/reset-password/${token}`,

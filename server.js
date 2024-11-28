@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const connectDB = require('./database/db');
 const userRoutes = require('./routers/userRoutes');
 const productRoutes = require('./routers/productRoutes'); // Import product routes
+const orderRoutes = require('./routers/orderRoutes');
 const cors = require('cors');
 require('dotenv').config();
 
@@ -23,6 +24,7 @@ connectDB();
 app.use('/user', userRoutes);
 app.use('/admin', productRoutes); // Add product routes for admin portal
 app.use('/', productRoutes);
+app.use('/api', orderRoutes);
 
 
 // Sample API route for frontend

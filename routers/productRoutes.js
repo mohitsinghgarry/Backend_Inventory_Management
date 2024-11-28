@@ -1,6 +1,6 @@
 const express = require('express');
 const multer = require('multer');
-const { addProduct, getProducts, removeProduct, updateProduct, singleProduct } = require('../controllers/productController');
+const { addProduct, getProducts, removeProduct, updateProduct, singleProduct, newsingleProduct } = require('../controllers/productController');
 
 const router = express.Router();
 
@@ -22,6 +22,8 @@ router.post('/remove', removeProduct);
 
 // GET route to retrieve a single product by ID
 router.get('/product/:id', singleProduct);
+
+router.get('/newproduct/:id', newsingleProduct);
 
 // PUT route to update a product with multiple images
 router.put('/products/:id', upload.array('images', 4), updateProduct); // Allow up to 4 images for updates

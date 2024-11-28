@@ -52,6 +52,33 @@ exports.singleProduct = async (req, res) => {
     }
 };
 
+exports.newsingleProduct = async (req, res) => {
+    const { id } = req.params; // Extract productId from URL params
+
+    try {
+        // Find the product by the custom field 'productId'
+        const product = await Product.findOne({ productId: id });
+        console.log(product)
+        if (!product) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+
+        // Check if the product is in stock
+        const isOutOfStock = product.quantity <= 0;
+            console.log(isOutOfStock)
+        // Send the product data including stock status
+        res.status(200).json({
+            productId: product.productId,
+            name: product.name,
+            availableQuantity: product.availableQuantity,
+            isOutOfStock,
+        });
+    } catch (error) {
+        // Handle errors if any occur
+        res.status(500).json({ message: 'Error fetching product', error: error.message });
+    }
+};
+
 // Controller function to remove a product
 exports.removeProduct = async (req, res) => {
     const { id } = req.body; // Extract product ID from the request body
@@ -68,19 +95,29 @@ exports.removeProduct = async (req, res) => {
 
 // Controller function to update a product
 exports.updateProduct = async (req, res) => {
-    const { name, productId, price, category, quantity, description} = req.body;
-    const imageUrls = req.files.map(file => `http://localhost:3000/uploads/${file.filename}`);
+    const { name, productId, price, category, quantity, description, existingImages } = req.body;
 
     try {
-        const updatedProduct = await Product.findByIdAndUpdate(
-            req.params.id, // Use the ID from the URL
-            { name, productId, price, category, quantity,description ,imageUrls },
-            { new: true } // Return the updated document
-        );
-
-        if (!updatedProduct) {
+        // Fetch the current product to get existing image URLs
+        const product = await Product.findById(req.params.id);
+        if (!product) {
             return res.status(404).json({ message: 'Product not found' });
         }
+
+        // Combine existing images and new uploaded images
+        let imageUrls = existingImages ? JSON.parse(existingImages) : product.imageUrls;
+
+        if (req.files && req.files.length > 0) {
+            const newImageUrls = req.files.map(file => `http://localhost:3000/uploads/${file.filename}`);
+            imageUrls = [...imageUrls, ...newImageUrls];
+        }
+
+        // Update the product with new data
+        const updatedProduct = await Product.findByIdAndUpdate(
+            req.params.id,
+            { name, productId, price, category, quantity, description, imageUrls },
+            { new: true } // Return the updated document
+        );
 
         res.status(200).json({ message: 'Product updated successfully', product: updatedProduct });
     } catch (error) {
