@@ -4,6 +4,7 @@ const connectDB = require('./database/db');
 const userRoutes = require('./routers/userRoutes');
 const productRoutes = require('./routers/productRoutes'); // Import product routes
 const orderRoutes = require('./routers/orderRoutes');
+const paymentRoutes = require('./routers/paymentRoutes');
 const cors = require('cors');
 require('dotenv').config();
 
@@ -25,6 +26,7 @@ app.use('/user', userRoutes);
 app.use('/admin', productRoutes); // Add product routes for admin portal
 app.use('/', productRoutes);
 app.use('/api', orderRoutes);
+app.use('/api/payment', paymentRoutes); // rzp routes
 
 
 // Sample API route for frontend
