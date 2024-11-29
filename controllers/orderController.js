@@ -4,6 +4,7 @@ const Order = require('../models/OrderSchema');
 const createOrder = async (req, res) => {
     try {
         const newOrder = new Order(req.body); // Create a new order document
+        console.log(req.body)
         const savedOrder = await newOrder.save(); // Save to the database
         res.status(201).json(savedOrder); // Respond with the saved order
     } catch (err) {

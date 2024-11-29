@@ -16,7 +16,7 @@ const orderSchema = new mongoose.Schema({
     phoneNumber: { type: String, required: true },
     productId :{type:String ,required:true},
     imageUrls: { type: [String], default: [] },
-    date: { type: Date, required: true, default: Date.now },  // Change to Date type
+    date: { type: String, required: true },
     status: { type: String, default: 'Order Placed' }
 });
 
