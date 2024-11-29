@@ -51,6 +51,22 @@ exports.singleProduct = async (req, res) => {
         res.status(500).json({ message: 'Error fetching product', error: error.message });
     }
 };
+// Assuming your schema for Product has a 'stock' field
+const getLowStockProducts = async (req, res) => {
+    try {
+      // Find products with stock <= 0
+      const lowStockProducts = await Product.find({ stock: { $lte: 0 } });
+  
+      res.json({
+        count: lowStockProducts.length,
+        lowStockProducts: lowStockProducts, // Optional, you can return the products themselves
+      });
+    } catch (error) {
+      console.error("Error fetching low stock products:", error);
+      res.status(500).json({ message: error.message });
+    }
+  };
+  
 
 exports.newsingleProduct = async (req, res) => {
     const { id } = req.params; // Extract productId from URL params
