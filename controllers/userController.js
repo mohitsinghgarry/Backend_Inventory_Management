@@ -271,11 +271,55 @@ const changePassword = async (req, res) => {
     }
 };
 
+const updateUserProfile = async (req, res) => {
+    const { email } = req.body; // Email to identify the user
+    const updates = req.body; // Fields to be updated
+
+    if (!email) {
+        return res.status(400).json({ success: false, message: 'Email is required!' });
+    }
+
+    try {
+        // Find the user by email
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found!' });
+        }
+
+        // Update the provided fields
+        Object.keys(updates).forEach((key) => {
+            if (key !== 'email') { // Exclude email if you don't want to update it
+                user[key] = updates[key];
+            }
+        });
+
+        // Save the updated user to the database
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Profile updated successfully!',
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                profilePhoto: user.profilePhoto,
+                userType: user.userType,
+            },
+        });
+    } catch (error) {
+        console.error('Error updating user profile:', error);
+        res.status(500).json({ success: false, message: 'An error occurred while updating the profile.' });
+    }
+};
+
 module.exports = { 
     signup, 
     verifyOtp, 
     login, 
     changePassword, 
     requestPasswordReset, 
-    resetPassword 
+    resetPassword ,
+    updateUserProfile
 };

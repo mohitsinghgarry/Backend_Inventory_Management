@@ -21,7 +21,6 @@ router.delete('/:id', deleteOrder); // Delete an order
 // New endpoints for order cancellation
 router.post('/orders/:id/request-cancel', requestCancelOrder); // User requests cancellation
 router.post('/orders/:id/handle-cancel', handleCancelApproval); // Admin approves/rejects cancellation
-
  // Direct cancel (if needed for admin use)
 
 module.exports = router;

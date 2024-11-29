@@ -14,6 +14,7 @@ const orderSchema = new mongoose.Schema({
         country: { type: String, required: true },
     },
     phoneNumber: { type: String, required: true },
+    productId :{type:String ,required:true},
     imageUrls: { type: [String], default: [] },
     date: { type: String, required: true },
     status: { type: String, default: 'Order Placed' }

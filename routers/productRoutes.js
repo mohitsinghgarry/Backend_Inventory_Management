@@ -1,6 +1,6 @@
 const express = require('express');
 const multer = require('multer');
-const { addProduct, getProducts, removeProduct, updateProduct, singleProduct, newsingleProduct } = require('../controllers/productController');
+const { addProduct, getProducts, removeProduct, updateProduct, singleProduct, newsingleProduct, updateStock } = require('../controllers/productController');
 
 const router = express.Router();
 
@@ -27,5 +27,5 @@ router.get('/newproduct/:id', newsingleProduct);
 
 // PUT route to update a product with multiple images
 router.put('/products/:id', upload.array('images', 4), updateProduct); // Allow up to 4 images for updates
-
+router.patch('/products/:id/update-stock',updateStock);
 module.exports = router;

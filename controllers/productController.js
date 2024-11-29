@@ -124,3 +124,32 @@ exports.updateProduct = async (req, res) => {
         res.status(500).json({ message: 'Error updating product', error: error.message });
     }
 };
+
+exports.updateStock = async (req, res) => {
+    const { productId } = req.body; // This is the custom productId, not the MongoDB _id field
+    const { quantity } = req.body;
+
+
+
+    try {
+        // Find the product using the `productId` field
+        const product = await Product.findOne({ productId }); // Query by custom productId
+        console.log(product)
+        if (!product) {
+            return res.status(404).json({ message: 'Product not found.' });
+        }
+
+        // Deduct the quantity from stock
+        product.quantity -= quantity;
+
+        if (product.quantity < 0) {
+            return res.status(400).json({ message: 'Insufficient stock.' });
+        }
+
+        await product.save();
+        res.status(200).json({ message: 'Stock updated successfully.', stock: product.quantity });
+    } catch (error) {
+        console.error('Error updating stock:', error);
+        res.status(500).json({ message: 'Internal server error.' });
+    }
+};
