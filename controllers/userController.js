@@ -54,7 +54,7 @@ async function sendPasswordResetLink(email, token) {
         from: process.env.EMAIL,
         to: email,
         subject: 'Password Reset Request',
-        text: `To reset your password, click the link: https://inventorymanagementpro.netlify.app/reset-password/${token}`,
+        text: `To reset your password, click the link: https://frontend-inventory-managment-8xjqf33qo.vercel.app/reset-password/${token}`,
     };
 
     try {
