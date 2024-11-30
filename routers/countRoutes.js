@@ -16,22 +16,26 @@ router.get('/products/count', async (req, res) => {
 });
 
 // Example of counting recent orders from today (midnight to now)
-router.get('/orders/recent-count', async (req, res) => {  // Change app.get to router.get
-    try {
+router.get('/orders/recent-count', async (req, res) => {
+  try {
       const startOfDay = new Date();
       startOfDay.setHours(0, 0, 0, 0); // Midnight today
-  
+
       const now = new Date(); // Current time
-  
-      const recentOrdersCount = await Order.countDocuments({
-        date: { $gte: startOfDay, $lte: now }, // Orders created today
-      });
-  
+
+      // Adjust query if 'date' is stored as a string
+      const orders = await Order.find(); // Retrieve all orders
+      const recentOrdersCount = orders.filter(order => {
+          const orderDate = new Date(order.date); // Parse string to Date object
+          return orderDate >= startOfDay && orderDate <= now;
+      }).length;
+
       res.json({ count: recentOrdersCount });
-    } catch (error) {
+  } catch (error) {
       res.status(500).json({ message: 'Error fetching recent orders count' });
-    }
+  }
 });
+
 
 // Route to get total order count
 router.get('/orders/count', async (req, res) => {
