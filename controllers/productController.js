@@ -103,7 +103,7 @@ exports.updateProduct = async (req, res) => {
         } else {
             imageUrls = product.imageUrls; // Retain existing images if no new ones are uploaded
         }
-        console.log(imageUrls)
+
         // Update the product details
         const updatedProduct = await Product.findByIdAndUpdate(
             req.params.id,

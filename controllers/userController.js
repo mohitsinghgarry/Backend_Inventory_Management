@@ -30,7 +30,9 @@ async function sendOTP(email, otp) {
     };
 
     try {
-        await transporter.sendMail(mailOptions);
+        
+        let a = await transporter.sendMail(mailOptions);
+        console.log(a);
         console.log(`OTP sent to email: ${email}`);
     } catch (error) {
         console.error('Error sending OTP:', error);
@@ -52,7 +54,7 @@ async function sendPasswordResetLink(email, token) {
         from: process.env.EMAIL,
         to: email,
         subject: 'Password Reset Request',
-        text: `To reset your password, click the link: http://localhost:3001/reset-password/${token}`,
+        text: `To reset your password, click the link: https://inventorymanagementpro.netlify.app/reset-password/${token}`,
     };
 
     try {
