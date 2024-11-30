@@ -46,3 +46,7 @@ app.get('/api/message', (req, res) => {
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);
 });
+
+app.get('/' ,(req , res)=>{
+  res.json({message : "hello world from backend"});
+})
