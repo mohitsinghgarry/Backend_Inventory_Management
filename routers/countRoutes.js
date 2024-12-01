@@ -20,8 +20,8 @@ router.get('/products/count', async (req, res) => {
 router.get("/orders/recent-count", async (req, res) => {
   try {
     // Get the current time and start of the day in UTC
-    const now = new Date(); // Current time in UTC
-    const startOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0)); // Midnight UTC
+    const now = new Date();
+    const startOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
 
     console.log("Start of Day (UTC):", startOfDay);
     console.log("Now (UTC):", now);
@@ -29,12 +29,19 @@ router.get("/orders/recent-count", async (req, res) => {
     // Retrieve all orders
     const orders = await Order.find();
 
+    if (!orders.length) {
+      console.error("No orders found in the database.");
+      return res.json({ count: 0 });
+    }
+
+    console.log("Total Orders:", orders.length);
+
     // Filter orders based on the parsed date
     const recentOrdersCount = orders.filter((order) => {
       console.log("Order Date String:", order.date);
 
-      // Parse the order date as a JavaScript Date object
-      const orderDate = new Date(order.date); // Assuming `order.date` is stored in ISO 8601 format
+      // Parse the order date
+      const orderDate = new Date(order.date);
       if (isNaN(orderDate)) {
         console.error("Invalid order date:", order.date);
         return false;
@@ -42,16 +49,18 @@ router.get("/orders/recent-count", async (req, res) => {
 
       console.log("Parsed Order Date (UTC):", orderDate);
 
-      // Check if the order date is within the start of today and now
+      // Check if the order date falls within today
       return orderDate >= startOfDay && orderDate <= now;
     }).length;
 
+    console.log("Recent Orders Count:", recentOrdersCount);
     res.json({ count: recentOrdersCount });
   } catch (error) {
     console.error("Error fetching recent orders count:", error);
     res.status(500).json({ message: "Error fetching recent orders count" });
   }
 });
+
 
 
 // Route to get total order count
