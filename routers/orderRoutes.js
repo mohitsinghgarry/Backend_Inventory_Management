@@ -1,5 +1,6 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
+const authenticateUser = require('../middleware/authenticateUser');
 const {
     createOrder,
     getAllOrders,
@@ -8,9 +9,11 @@ const {
     deleteOrder,
     requestCancelOrder,
     handleCancelApproval,
-} = require('../controllers/orderController'); // Ensure the controller is imported
+    getalladminorders
+} = require('../controllers/orderController');
 const router = express.Router();
 
+// Route to place a new order
 router.post('/placeorder', [
     // Validate and sanitize inputs
     body('name').notEmpty().withMessage('Product name is required'),
@@ -33,16 +36,21 @@ router.post('/placeorder', [
     // Delegate to controller to handle order creation
     await createOrder(req, res);
 });
+router.post('/order', authenticateUser, createOrder);
+// Route to get all orders (with authentication)
+router.get('/getorders', authenticateUser, getAllOrders); // Get all orders for authenticated user
 
-// Other routes
-router.post('/order', createOrder); // Create a new order
-router.get('/getorders', getAllOrders); // Get all orders
+// Route to get a specific order by ID
 router.get('/:id', getOrderById); // Get a specific order by ID
-router.patch('/order/:id', updateOrderStatus); // Update order status
-router.delete('/:id', deleteOrder); // Delete an order
 
-// New endpoints for order cancellation
-router.post('/orders/:id/request-cancel', requestCancelOrder); // User requests cancellation
-router.post('/orders/:id/handle-cancel', handleCancelApproval); // Admin approves/rejects cancellation
+// Route to update the order status (usually for admins or authorized users)
+router.patch('/order/:id', authenticateUser, updateOrderStatus); // Update order status (with auth)
 
+router.delete('/:id', authenticateUser, deleteOrder); // Delete an order (only for authorized users)
+
+// New endpoints for order cancellation (authentication should be enforced)
+router.post('/orders/:id/request-cancel', authenticateUser, requestCancelOrder); // User requests cancellation
+router.post('/orders/:id/handle-cancel',authenticateUser, handleCancelApproval); // Admin handles cancellation approval
+
+router.get('/getorders/all', authenticateUser , getalladminorders);
 module.exports = router;

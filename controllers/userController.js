@@ -18,7 +18,7 @@ async function sendOTP(email, otp) {
         service: 'gmail',
         auth: {
             user: process.env.EMAIL, // Replace with your email
-            pass: process.env.PASS,         // Use password from .env
+            pass: process.env.PASS,   // Use password from .env
         },
     });
 
@@ -30,9 +30,7 @@ async function sendOTP(email, otp) {
     };
 
     try {
-        
-        let a = await transporter.sendMail(mailOptions);
-        console.log(a);
+        await transporter.sendMail(mailOptions);
         console.log(`OTP sent to email: ${email}`);
     } catch (error) {
         console.error('Error sending OTP:', error);
@@ -46,7 +44,7 @@ async function sendPasswordResetLink(email, token) {
         service: 'gmail',
         auth: {
             user: process.env.EMAIL, // Replace with your email
-            pass: process.env.PASS,         // Use password from .env
+            pass: process.env.PASS,   // Use password from .env
         },
     });
 
@@ -54,7 +52,7 @@ async function sendPasswordResetLink(email, token) {
         from: process.env.EMAIL,
         to: email,
         subject: 'Password Reset Request',
-        text: `To reset your password, click the link: https://frontend-inventory-managment-8xjqf33qo.vercel.app/reset-password/${token}`,
+        text: `To reset your password, click the link: https://yourfrontendurl/reset-password/${token}`,
     };
 
     try {
@@ -69,8 +67,8 @@ async function sendPasswordResetLink(email, token) {
 // Signup Controller with encrypted password storage
 async function signup(req, res) {
     const { name, email, password, userType } = req.body;
-    console.log(req.body);
-    if (!name || !email || !password || !userType) { // Check for userType
+
+    if (!name || !email || !password || !userType) { // Ensure userType is provided
         return res.status(400).json({ success: false, message: 'All fields are required!' });
     }
 
@@ -89,11 +87,11 @@ async function signup(req, res) {
 
         // Generate OTP and encrypt password
         const otp = generateOTP();
-        const otpExpiry = Date.now() + 70000; // 70 seconds
+        const otpExpiry = Date.now() + 70000; // 70 seconds expiry for OTP
         const encryptedPassword = await bcrypt.hash(password, 10);
 
         // Store OTP, encrypted password, and expiration time
-        otps[email] = { otp, otpExpiry, encryptedPassword, name, userType }; // Correctly storing userType
+        otps[email] = { otp, otpExpiry, encryptedPassword, name, userType };
 
         // Send OTP to user's email
         await sendOTP(email, otp);
@@ -105,11 +103,10 @@ async function signup(req, res) {
     }
 }
 
-
 // OTP Verification Controller
 async function verifyOtp(req, res) {
     const { email, otp } = req.body;
-    console.log(req.body);
+
     if (!email || !otp) {
         return res.status(400).json({ success: false, message: 'Email and OTP are required!' });
     }
@@ -123,8 +120,8 @@ async function verifyOtp(req, res) {
                 // OTP is valid, create user with encrypted password, name, and userType
                 const newUser = new User({
                     email,
-                    name: storedOtpData.name, // Store name in the database
-                    userType: storedOtpData.userType, // Store userType in the database
+                    name: storedOtpData.name,
+                    userType: storedOtpData.userType,
                     password: storedOtpData.encryptedPassword,
                 });
                 await newUser.save();
@@ -149,7 +146,6 @@ async function verifyOtp(req, res) {
     }
 }
 
-
 // Login Controller
 async function login(req, res) {
     const { email, password } = req.body;
@@ -171,17 +167,21 @@ async function login(req, res) {
             return res.status(401).json({ success: false, message: 'Invalid email or password!' });
         }
 
+        const token = jwt.sign({ id: user._id, userType: user.userType }, process.env.JWT_SECRET, {
+            expiresIn: '1d', // Token expiry
+        });
+
         // Successfully authenticated
-        // Sending back user details along with the message
         return res.status(200).json({
             success: true,
             message: 'Login successful!',
             user: {
                 id: user._id,
-                name: user.name, // Ensure this is included
+                name: user.name,
                 email: user.email,
-                userType:user.userType
-            }
+                userType: user.userType,
+            },
+            token,
         });
     } catch (error) {
         console.error('Login error:', error);
@@ -192,22 +192,18 @@ async function login(req, res) {
 // Password Reset Request Controller
 const requestPasswordReset = async (req, res) => {
     const { email } = req.body;
-    
+
     if (!email) {
         return res.status(400).json({ success: false, message: 'Email is required!' });
     }
 
     try {
-        // Check if user exists
         const user = await User.findOne({ email });
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
 
-        // Generate JWT token for password reset
-        const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '1h' }); // Use an appropriate secret
-
-        // Send password reset link to user's email
+        const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '1h' }); // JWT for password reset
         await sendPasswordResetLink(email, token);
 
         res.status(200).json({ success: true, message: 'Password reset link sent to your email.' });
@@ -226,17 +222,14 @@ const resetPassword = async (req, res) => {
     }
 
     try {
-        // Verify the token
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const email = decoded.email;
 
-        // Check if user exists
         const user = await User.findOne({ email });
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
 
-        // Hash the new password and save it
         user.password = await bcrypt.hash(newPassword, 10);
         await user.save();
 
@@ -262,8 +255,7 @@ const changePassword = async (req, res) => {
             return res.status(401).json({ success: false, message: 'Incorrect old password' });
         }
 
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
-        user.password = hashedPassword;
+        user.password = await bcrypt.hash(newPassword, 10);
         await user.save();
 
         res.status(200).json({ success: true, message: 'Password changed successfully' });
@@ -273,30 +265,27 @@ const changePassword = async (req, res) => {
     }
 };
 
+// Update User Profile Controller
 const updateUserProfile = async (req, res) => {
-    const { email } = req.body; // Email to identify the user
-    const updates = req.body; // Fields to be updated
+    const { email } = req.body;
+    const updates = req.body;
 
     if (!email) {
         return res.status(400).json({ success: false, message: 'Email is required!' });
     }
 
     try {
-        // Find the user by email
         const user = await User.findOne({ email });
-
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found!' });
         }
 
-        // Update the provided fields
         Object.keys(updates).forEach((key) => {
-            if (key !== 'email') { // Exclude email if you don't want to update it
+            if (key !== 'email') {
                 user[key] = updates[key];
             }
         });
 
-        // Save the updated user to the database
         await user.save();
 
         res.status(200).json({
@@ -306,8 +295,8 @@ const updateUserProfile = async (req, res) => {
                 id: user._id,
                 name: user.name,
                 email: user.email,
-                profilePhoto: user.profilePhoto,
                 userType: user.userType,
+                profilePhoto: user.profilePhoto,
             },
         });
     } catch (error) {
@@ -316,12 +305,12 @@ const updateUserProfile = async (req, res) => {
     }
 };
 
-module.exports = { 
-    signup, 
-    verifyOtp, 
-    login, 
-    changePassword, 
-    requestPasswordReset, 
-    resetPassword ,
-    updateUserProfile
+module.exports = {
+    signup,
+    verifyOtp,
+    login,
+    changePassword,
+    requestPasswordReset,
+    resetPassword,
+    updateUserProfile,
 };
