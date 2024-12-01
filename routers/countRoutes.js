@@ -40,6 +40,8 @@ router.get("/orders/recent-count", async (req, res) => {
       console.log("Parsed Order Date (UTC):", orderDate);
 
       // Check if the order date matches the current date (ignoring time)
+      console.log( orderDate.toISOString().split("T")[0] ===
+      now.toISOString().split("T")[0]);
       return (
         orderDate.toISOString().split("T")[0] ===
         now.toISOString().split("T")[0]
