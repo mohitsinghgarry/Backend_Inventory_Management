@@ -19,22 +19,12 @@ router.get('/products/count', async (req, res) => {
 // Route to get the recent orders count
 router.get("/orders/recent-count", async (req, res) => {
   try {
-    // Get the current time and start of the day in UTC
-    const now = new Date();
-    const startOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
+    const now = new Date(); // Current time in UTC
 
-    console.log("Start of Day (UTC):", startOfDay);
     console.log("Now (UTC):", now);
 
     // Retrieve all orders
     const orders = await Order.find();
-
-    if (!orders.length) {
-      console.error("No orders found in the database.");
-      return res.json({ count: 0 });
-    }
-
-    console.log("Total Orders:", orders.length);
 
     // Filter orders based on the parsed date
     const recentOrdersCount = orders.filter((order) => {
@@ -49,8 +39,11 @@ router.get("/orders/recent-count", async (req, res) => {
 
       console.log("Parsed Order Date (UTC):", orderDate);
 
-      // Check if the order date falls within today
-      return orderDate >= startOfDay && orderDate <= now;
+      // Check if the order date matches the current date (ignoring time)
+      return (
+        orderDate.toISOString().split("T")[0] ===
+        now.toISOString().split("T")[0]
+      );
     }).length;
 
     console.log("Recent Orders Count:", recentOrdersCount);
@@ -60,6 +53,7 @@ router.get("/orders/recent-count", async (req, res) => {
     res.status(500).json({ message: "Error fetching recent orders count" });
   }
 });
+
 
 
 
