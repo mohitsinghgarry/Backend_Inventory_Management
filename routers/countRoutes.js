@@ -4,27 +4,6 @@ const Order = require('../models/OrderSchema');
 const User = require('../models/User');
 const moment = require('moment');  // Add moment import
 const router = express.Router();
-const parseIndianDate = (dateString) => {
-  try {
-    const [datePart, timePart] = dateString.split(", ");
-    const [day, month, year] = datePart.split("/").map(Number);
-    const [time, meridian] = timePart.split(" ");
-    const [hours, minutes, seconds] = time.split(":").map(Number);
-
-    const adjustedHours =
-      meridian === "PM" && hours !== 12
-        ? hours + 12
-        : meridian === "AM" && hours === 12
-        ? 0
-        : hours;
-
-    const date = new Date(year, month - 1, day, adjustedHours, minutes, seconds);
-    return date.toISOString();
-  } catch (error) {
-    console.error(`Error parsing date: ${dateString}`, error);
-    return null;
-  }
-};
 // Route to get product count
 router.get('/products/count', async (req, res) => {
   try {
@@ -40,26 +19,30 @@ router.get('/products/count', async (req, res) => {
 // Route to get the recent orders count
 router.get("/orders/recent-count", async (req, res) => {
   try {
-    // Define the start of the day and the current time in UTC
+    // Get the current time and start of the day in UTC
     const now = new Date(); // Current time in UTC
-    const startOfDay = new Date(now);
-    startOfDay.setUTCHours(0, 0, 0, 0); // Midnight UTC of the same day
+    const startOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0)); // Midnight UTC
 
     console.log("Start of Day (UTC):", startOfDay);
     console.log("Now (UTC):", now);
 
     // Retrieve all orders
-    const orders = await Order.find(); 
+    const orders = await Order.find();
 
     // Filter orders based on the parsed date
     const recentOrdersCount = orders.filter((order) => {
       console.log("Order Date String:", order.date);
 
-      // Parse the stored date string into UTC
-      const orderDate = new Date(order.date); // Assuming the stored date is ISO 8601
+      // Parse the order date as a JavaScript Date object
+      const orderDate = new Date(order.date); // Assuming `order.date` is stored in ISO 8601 format
+      if (isNaN(orderDate)) {
+        console.error("Invalid order date:", order.date);
+        return false;
+      }
+
       console.log("Parsed Order Date (UTC):", orderDate);
 
-      // Check if the order date falls within today
+      // Check if the order date is within the start of today and now
       return orderDate >= startOfDay && orderDate <= now;
     }).length;
 
