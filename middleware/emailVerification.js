@@ -4,7 +4,7 @@ require('dotenv').config();
 const emailVerificationApiKey = process.env.API_VARI;
 
 async function verifyEmail(email) {
-    const url = `https://emailvalidation.abstractapi.com/v1/?api_key=${emailVerificationApiKey}&email=${email}`;
+    const url = `https://emailvalidation.abstractapi.com/v1/?api_key=${emailVerificationApiKey}&email=${email}`; //mnewone
     try {
         const response = await axios.get(url);
         const data = response.data;
