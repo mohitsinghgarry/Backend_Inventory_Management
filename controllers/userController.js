@@ -52,7 +52,7 @@ async function sendPasswordResetLink(email, token) {
         from: process.env.EMAIL,
         to: email,
         subject: 'Password Reset Request',
-        text: `To reset your password, click the link: https://frontend-inventory-managment.vercel.app/reset-password/${token}`,
+        text: `To reset your password, click the link: https://inventory-managment-pro.vercel.app/reset-password/${token}`,
     };
 
     try {
